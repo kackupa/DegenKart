@@ -11,7 +11,8 @@ import {shouldPauseOnBlur} from "./spectator";
 
 function visitorPool(){let p=createPool();for(let i=0;i<4;i++)p=claimSlot(p,i,`demo-ai-${i}`);return p;}
 
-type Action = "start" | "pause" | "restart" | "reset";
+type Action = "start" | "pause" | "restart" | "reset" | "confirmRestart";
+const INTER_RACE_SECONDS=30;
 function hud(g:GameState,followId=0) {
   const p=g.racers[followId],board=standings(g);
   return {phase:g.phase,paused:g.paused,countdown:Math.ceil(g.countdown),time:g.time,speed:Math.round(p.speed*3.6),lap:Math.min(LAPS,p.laps+1),position:board.findIndex(r=>r.id===followId)+1,item:p.item,
@@ -23,6 +24,8 @@ const keyMap:Record<string,keyof Controls>={ArrowUp:"throttle",KeyW:"throttle",A
 
 export default function RaceGame(){
   const canvasRef=useRef<HTMLCanvasElement>(null);
+  const resetDialog=useRef<HTMLDialogElement>(null);
+  const [resetError,setResetError]=useState("");
   const input=useRef<Controls>(noControls());
   const keyboard=useRef(new Set<string>());
   const pointers=useRef(new Map<number,keyof Controls>());
@@ -35,7 +38,7 @@ export default function RaceGame(){
   const [following,setFollowing]=useState(-1);
   const [notice,setNotice]=useState("");
   const lobbyDeadline=useRef<number|null>(null);
-  const [lobbySeconds,setLobbySeconds]=useState(120);
+  const [lobbySeconds,setLobbySeconds]=useState(INTER_RACE_SECONDS);
   function updatePool(next:Pool){ledger.current=next;setPool(next);}
   function poolAction(action:()=>Pool){try{updatePool(action());setNotice("");}catch(e){setNotice(e instanceof Error?e.message:"Action failed.");}}
   function expireLobby(){
@@ -76,10 +79,13 @@ export default function RaceGame(){
       ledger.current=nextRound(ledger.current);setPool(ledger.current);
       game=createGame();controlled.current=-1;camera.current=-1;setFollowing(-1);
       renderer.yaw=game.racers[0].yaw;clearInput();accumulator=0;
-      lobbyDeadline.current=Date.now()+120_000;setLobbySeconds(120);setNotice(message);
+      lobbyDeadline.current=Date.now()+INTER_RACE_SECONDS*1000;setLobbySeconds(INTER_RACE_SECONDS);setNotice(message);
     };
     actionRef.current=(action:Action)=>{
       if(action==="restart"){
+        setResetError("");resetDialog.current?.showModal();return;
+      }
+      if(action==="confirmRestart"){
         openLobby("New grid — click Play to join. Any refunds remain claimable under Bet.");
       }
       if(action==="start"&&ledger.current.phase==="open"){
@@ -180,6 +186,21 @@ export default function RaceGame(){
       </aside>
     </div>
     <details className="demo-tools"><summary>Race controls</summary><button onClick={()=>actionRef.current("restart")}>New lobby</button>{pool.phase==="open"&&<button onClick={()=>actionRef.current("start")}>Fill empty karts with AI & start</button>}{process.env.NODE_ENV!=="production"&&SPECIALS.map((special,id)=><button key={special} disabled={view.phase!=="racing"||view.paused} onClick={()=>specialPreview.current(id)}>Try {ITEM_NAMES[special]}</button>)}</details>
+    <dialog ref={resetDialog} aria-labelledby="reset-title" onClose={()=>{resetDialog.current?.querySelector("form")?.reset();setResetError("");}} style={{background:"#17212c",color:"#fff",border:"1px solid #64738b",padding:"24px",maxWidth:"min(360px,90vw)"}}>
+      <form onSubmit={event=>{
+        event.preventDefault();
+        // Local-only UI guard. Public static code cannot enforce admin authentication.
+        if(new FormData(event.currentTarget).get("password")!=="kackupa"){setResetError("Incorrect password.");return;}
+        resetDialog.current?.close();actionRef.current("confirmRestart");
+      }}>
+        <h2 id="reset-title">Reset lobby</h2>
+        <label htmlFor="reset-password">Admin password</label>
+        <input id="reset-password" name="password" type="password" required autoComplete="off" style={{display:"block",width:"100%",margin:"12px 0",padding:"10px",boxSizing:"border-box"}}/>
+        {resetError&&<p role="alert">{resetError}</p>}
+        <button type="button" onClick={()=>resetDialog.current?.close()}>Cancel</button>{" "}
+        <button type="submit">Reset lobby</button>
+      </form>
+    </dialog>
     <footer className="page-footer"><span>PEPECOIN KART <b>© 2026</b></span><span>INDEPENDENT PEPECOIN COMMUNITY GAME</span><span className="footer-detail">UNOFFICIAL · FREE TO PLAY</span></footer>
   </main>;
 }
