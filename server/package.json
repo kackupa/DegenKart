@@ -1,8 +1,8 @@
 {
-  "name": "degen-kart-race-server",
+  "name": "pepecoin-kart-race-server",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node src/index.js", "dev": "node --watch src/index.js" },
-  "dependencies": { "socket.io": "^4.8.1" },
-  "engines": { "node": ">=20" }
+  "scripts": { "start": "node --experimental-strip-types src/index.js", "dev": "node --experimental-strip-types --watch src/index.js" },
+  "dependencies": { "ws": "^8.18.3" },
+  "engines": { "node": ">=22.18.0" }
 }

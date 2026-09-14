@@ -98,7 +98,7 @@ export function updateProgress(g:GameState,r:Racer,newS:number,dt:number) {
     }
   }
 }
-export function stepGame(g:GameState,controls:Controls,dt:number,controlledId:number=0) {
+export function stepGame(g:GameState,controls:Controls,dt:number,controlledId:number=0,remoteControls?:Map<number,Controls>) {
   if(g.paused||g.phase==="ready"||g.phase==="finished")return;
   dt=clamp(dt,0,1/30);
   if(g.phase==="countdown"){g.countdown-=dt;if(g.countdown<=0){g.phase="racing";say(g,"GO!");}return;}
@@ -107,7 +107,7 @@ export function stepGame(g:GameState,controls:Controls,dt:number,controlledId:nu
   for(const r of g.racers){
     if(r.finish!==null)continue;
     if(r.stunUntil>g.time-1e-9)continue;
-    const c=r.id===controlledId?controls:aiControls(r);
+    const c=remoteControls?.get(r.id)??(r.id===controlledId?controls:aiControls(r));
     r.hit=Math.max(0,r.hit-dt);r.boost=Math.max(0,r.boost-dt);r.shield=Math.max(0,r.shield-dt);r.padCooldown=Math.max(0,r.padCooldown-dt);
     const desired=(c.right?1:0)-(c.left?1:0);
     r.steer+=(desired-r.steer)*Math.min(1,dt*9);

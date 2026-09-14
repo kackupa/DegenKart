@@ -23,7 +23,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node --test tests/specials.test.mjs tests/kart-animation.test.mjs
+      - run: node --test tests/specials.test.mjs tests/kart-animation.test.mjs tests/multiplayer.test.mjs
       - run: npx vite build --config vite.pages.config.ts
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

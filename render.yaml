@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: pepecoin-kart-race
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci --prefix server
+    startCommand: npm start --prefix server
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.18.0
+      - key: ALLOWED_ORIGINS
+        value: https://kackupa.github.io
+      - key: ADMIN_PASSWORD
+        generateValue: true
