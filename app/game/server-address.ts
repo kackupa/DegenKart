@@ -1,2 +1,2 @@
 // Public WebSocket endpoint; never put a password or token in this file.
-export const RACE_SERVER_URL="";
+export const RACE_SERVER_URL="wss://pepecoin-kart-race.onrender.com/race";
