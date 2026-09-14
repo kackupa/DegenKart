@@ -1,0 +1,8 @@
+{
+  "name": "degen-kart-race-server",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node src/index.js", "dev": "node --watch src/index.js" },
+  "dependencies": { "socket.io": "^4.8.1" },
+  "engines": { "node": ">=20" }
+}
